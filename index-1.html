@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d5dfc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>AI Assistant</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7fb;color:#172033}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#111827;color:#fff;padding:18px;display:flex;flex-direction:column}
+.brand{font-size:21px;font-weight:800;margin:5px 4px 22px}
+.new{background:#6d5dfc;color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px}
+.title{font-size:11px;color:#9ca3af;margin:25px 5px 10px;text-transform:uppercase;letter-spacing:1px}
+.chatitem{padding:10px;border-radius:9px;color:#d1d5db;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bottom{margin-top:auto}
+.bottom button{width:100%;padding:11px;margin-top:6px;border:0;background:#1f2937;color:#e5e7eb;border-radius:9px;text-align:left}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+.top h1{font-size:19px;margin:0 0 5px}
+.online{font-size:12px;color:#667085}
+.dot{display:inline-block;width:7px;height:7px;background:#22c55e;border-radius:50%;margin-right:5px}
+.clear{border:0;background:#f1f2f6;border-radius:9px;padding:9px 12px}
+.chat{flex:1;overflow:auto;padding:25px 7%}
+.welcome{text-align:center;max-width:680px;margin:35px auto}
+.logo{width:58px;height:58px;border-radius:18px;background:#6d5dfc;color:white;display:grid;place-items:center;margin:auto;font-size:28px}
+.welcome h2{font-size:30px;margin:17px 0 7px}
+.welcome p{color:#667085;line-height:1.5}
+.suggest{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.suggest button,.tools button{border:1px solid #dfe3ea;background:#fff;border-radius:11px;padding:12px;cursor:pointer}
+.message{display:flex;gap:9px;margin:14px 0}
+.avatar{width:34px;height:34px;border-radius:10px;background:#6d5dfc;color:white;display:grid;place-items:center;flex:none}
+.bubble{background:#fff;border:1px solid #e2e5ec;border-radius:14px;padding:11px 14px;max-width:78%;line-height:1.5;white-space:pre-wrap}
+.message.user{justify-content:flex-end}
+.message.user .bubble{background:#6d5dfc;color:#fff;border:0}
+.tools{display:flex;gap:8px;padding:0 7%;align-items:center}
+.tools button{padding:8px 11px}
+#fileStatus{font-size:12px;color:#667085;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.composer{margin:10px 7% 7px;background:#fff;border:1px solid #dfe3ea;border-radius:15px;padding:7px;display:flex;gap:7px}
+.composer input{flex:1;border:0;outline:0;padding:10px;font-size:15px}
+.icon{width:42px;border:0;border-radius:10px;background:#f1f2f6;cursor:pointer}
+.send{background:#6d5dfc;color:#fff}
+.note{text-align:center;color:#98a0ad;font-size:11px;margin:0 0 10px}
+.modal{position:fixed;inset:0;background:#0008;display:grid;place-items:center}
+.modal.hide{display:none}
+.card{background:#fff;width:min(380px,90%);border-radius:18px;padding:24px;position:relative}
+.close{position:absolute;right:14px;top:9px;border:0;background:none;font-size:24px}
+.card label{display:block;padding:11px 0}
+.done{width:100%;padding:11px;border:0;border-radius:10px;background:#6d5dfc;color:#fff}
+.dark{background:#0b1220;color:#e5e7eb}
+.dark .top,.dark .bubble,.dark .suggest button,.dark .tools button,.dark .composer,.dark .card{background:#111827;color:#e5e7eb;border-color:#263244}
+.dark .welcome p,.dark .online,.dark #fileStatus{color:#9ca3af}
+@media(max-width:700px){
+.sidebar{display:none}.top{padding:15px}.chat{padding:20px 5%}
+.tools,.composer{margin-left:5%;margin-right:5%}
+.suggest{grid-template-columns:1fr}.welcome{margin-top:25px}
+.welcome h2{font-size:27px}.bubble{max-width:88%}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="brand">✦ AI Assistant</div>
+  <button class="new" onclick="newChat()">＋ New Chat</button>
+  <div class="title">Recent Chats</div>
+  <div id="history"></div>
+  <div class="bottom">
+    <button onclick="toggleTheme()">☾ Theme</button>
+    <button onclick="settings()">⚙ Settings</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<header class="top">
+  <div>
+    <h1>AI Conversational Assistant</h1>
+    <span class="online"><span class="dot"></span>AI Assistant Online</span>
+  </div>
+  <button class="clear" onclick="clearChat()">⌫</button>
+</header>
+
+<section class="chat" id="chat">
+  <div class="welcome">
+    <div class="logo">✦</div>
+    <h2>How can I help you?</h2>
+    <p>Ask a question, study a topic, generate ideas, or get a simple explanation.</p>
+    <div class="suggest">
+      <button onclick="promptUser('Explain Artificial Intelligence in simple words')">🤖 Explain AI simply</button>
+      <button onclick="promptUser('Give me 5 important DBMS topics for an exam')">📚 Study help</button>
+      <button onclick="promptUser('Translate Hello, how are you? into Tamil')">🌐 Translate</button>
+      <button onclick="promptUser('Give me a simple project idea for a computer science student')">💡 Project ideas</button>
+    </div>
+  </div>
+</section>
+
+<div class="tools">
+  <button onclick="document.getElementById('img').click()">📷 Image</button>
+  <button onclick="document.getElementById('doc').click()">📄 Document</button>
+  <input id="img" type="file" accept="image/*" hidden onchange="fileSelected(this,'Image')">
+  <input id="doc" type="file" accept=".pdf,.doc,.docx,.txt" hidden onchange="fileSelected(this,'Document')">
+  <span id="fileStatus"></span>
+</div>
+
+<form class="composer" onsubmit="send(event)">
+  <button class="icon" type="button" onclick="voice()">🎤</button>
+  <input id="msg" autocomplete="off" placeholder="Message AI Assistant...">
+  <button class="icon send" type="submit">➤</button>
+</form>
+
+<p class="note">Academic project demonstration</p>
+
+</main>
+</div>
+
+<div class="modal hide" id="modal">
+  <div class="card">
+    <button class="close" onclick="closeSettings()">×</button>
+    <h2>Settings</h2>
+    <label>☑ Save conversation history</label>
+    <label>☑ Suggested prompts</label>
+    <button class="done" onclick="closeSettings()">Done</button>
+  </div>
+</div>
+
+<script>
+/*
+ IMPORTANT:
+ This frontend is prepared for a SECURE backend.
+ Do NOT put an OpenAI/Gemini API key inside this file.
+ GitHub Pages cannot safely store secret API keys.
+
+ When your backend is ready, change API_URL to your backend endpoint.
+ Example:
+ const API_URL = "https://your-backend.example.com/api/chat";
+*/
+const API_URL = "";
+
+const chat = document.getElementById("chat");
+const msg = document.getElementById("msg");
+const historyBox = document.getElementById("history");
+const modal = document.getElementById("modal");
+const fileStatus = document.getElementById("fileStatus");
+
+let hs = JSON.parse(localStorage.getItem("ai_history") || "[]");
+
+function promptUser(text){
+  msg.value = text;
+  msg.focus();
+}
+
+async function getAIAnswer(question){
+  /*
+   If a secure backend URL is configured, send the question to it.
+   Expected backend response:
+   { "answer": "your AI answer" }
+  */
+  if(API_URL){
+    try{
+      const response = await fetch(API_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({message:question})
+      });
+
+      if(!response.ok) throw new Error("Backend error");
+
+      const data = await response.json();
+
+      if(data.answer){
+        return data.answer;
+      }
+
+      if(data.response){
+        return data.response;
+      }
+
+      throw new Error("No answer returned");
+    }catch(error){
+      return "AI server connection failed. Please check the secure backend.";
+    }
+  }
+
+  /*
+   Temporary offline academic-demo answers.
+   These keep the app usable until the secure backend is connected.
+  */
+  return demoAnswer(question);
+}
+
+function demoAnswer(q){
+  const text = q.toLowerCase();
+
+  if(text.includes("dbms")){
+    return "Here are 5 important DBMS topics for an exam:\n\n1. ER Model and ER Diagram\n2. Relational Model and Keys\n3. SQL and Queries\n4. Normalization\n5. Transactions and ACID Properties\n\nFocus especially on SQL, normalization, keys, and transactions.";
+  }
+
+  if(text.includes("artificial intelligence") || text.includes("what is ai")){
+    return "Artificial Intelligence (AI) is a branch of computer science that enables computers to perform tasks that normally require human intelligence, such as understanding language, recognizing patterns, learning from data, and solving problems.";
+  }
+
+  if(text.includes("translate") && text.includes("tamil")){
+    return "“Hello, how are you?” → “வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?”";
+  }
+
+  if(text.includes("project")){
+    return "A good Computer Science project should solve a real problem. Some ideas are:\n\n1. AI Conversational Assistant\n2. Courier Management System\n3. Student Help Portal\n4. Online Event Registration System\n5. Resume Builder";
+  }
+
+  if(text.includes("hello") || text.includes("hi")){
+    return "Hello! 👋 I’m your AI Conversational Assistant. How can I help you today?";
+  }
+
+  if(text.includes("headache") || text.includes("thala vali")){
+    return "Sorry you're feeling uncomfortable. If you have a severe or unusual headache, or symptoms such as fainting, weakness, confusion, vision problems, repeated vomiting, or a sudden very severe headache, seek medical care promptly. Otherwise, rest, drink water, and avoid excessive screen strain.";
+  }
+
+  return "I received your question. This version is connected to the app interface, but the secure AI backend is not connected yet. Once the backend URL is added, the assistant can generate real AI answers instead of fixed demo responses.";
+}
+
+function addMessage(text,isUser){
+  const row = document.createElement("div");
+  row.className = "message " + (isUser ? "user" : "");
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = isUser ? "U" : "✦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+
+  if(isUser){
+    row.appendChild(bubble);
+    row.appendChild(avatar);
+  }else{
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+  }
+
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+  return row;
+}
+
+async function send(e){
+  e.preventDefault();
+
+  const question = msg.value.trim();
+  if(!question) return;
+
+  document.querySelector(".welcome")?.remove();
+
+  addMessage(question,true);
+  msg.value = "";
+
+  const thinking = addMessage("Thinking…",false);
+
+  const answer = await getAIAnswer(question);
+
+  thinking.remove();
+  addMessage(answer,false);
+
+  hs.unshift(question);
+  hs = hs.slice(0,8);
+  localStorage.setItem("ai_history",JSON.stringify(hs));
+  renderHistory();
+}
+
+function renderHistory(){
+  historyBox.innerHTML = hs.map(x =>
+    '<div class="chatitem">' +
+    x.replace(/[&<>]/g,"") +
+    '</div>'
+  ).join("");
+}
+
+function newChat(){
+  location.reload();
+}
+
+function clearChat(){
+  chat.innerHTML =
+    '<div class="welcome">' +
+    '<div class="logo">✦</div>' +
+    '<h2>How can I help you?</h2>' +
+    '<p>Start a new conversation with your AI assistant.</p>' +
+    '</div>';
+}
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+}
+
+function settings(){
+  modal.classList.remove("hide");
+}
+
+function closeSettings(){
+  modal.classList.add("hide");
+}
+
+function fileSelected(input,type){
+  if(input.files && input.files[0]){
+    fileStatus.textContent = type + ": " + input.files[0].name;
+  }
+}
+
+function voice(){
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+    alert("Voice input needs Google Chrome.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = function(){
+    fileStatus.textContent = "🎤 Listening...";
+  };
+
+  recognition.onresult = function(event){
+    msg.value = event.results[0][0].transcript;
+    fileStatus.textContent = "Voice captured";
+  };
+
+  recognition.onerror = function(){
+    fileStatus.textContent = "Voice input stopped";
+  };
+
+  recognition.onend = function(){
+    setTimeout(function(){
+      fileStatus.textContent = "";
+    },1500);
+  };
+
+  recognition.start();
+}
+
+renderHistory();
+</script>
+
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js").catch(function(){});
+}
+</script>
+
+</body>
+</html>
